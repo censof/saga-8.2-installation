@@ -1,0 +1,10 @@
+saga_version: 8.2 
+acct_home_dir: /infxdata/ids
+acct_dir: /home/acct
+services:
+  service_csmsaga:
+    service_name: "service_csmsaga"
+    port: "21100/tcp"
+  service_csmsagatcp:
+    service_name: "service_csmsagatcp"
+    port: "21200/tcp"

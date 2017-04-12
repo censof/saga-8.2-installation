@@ -1,0 +1,188 @@
+---
+
+#Firewall/selinux disable 
+- name: firewall off
+  shell: service iptables stop
+  ignore_errors: yes
+  changed_when: false
+  
+- name: make firewall permanent off
+  shell: chkconfig iptables off
+  ignore_errors: yes
+  changed_when: false
+  
+- name: disable selinux
+  replace: dest=/etc/selinux/config regexp='SELINUX=enforcing' replace='SELINUX=disable'
+ 
+#create users 
+- name: Create acct user
+  user: name=acct
+ 
+- group:
+    name: acct
+    state: present
+    
+- name: Create fourjs user
+  user: name=fourjs
+ 
+- group:
+    name: fourjs
+    state: present
+    
+- name: Create informix user
+  user: name=informix
+ 
+- group:
+    name: informix
+    state: present
+    
+# Fourjs installation FGL/GWS/GDC
+- name: fgl
+  command: mkdir -p /opt/4js/fgl/2.41.04
+  ignore_errors: yes
+  
+- name: gas
+  command: mkdir -p /opt/4js/gas/2.41.25
+  ignore_errors: yes
+  
+- name: gdc
+  command: mkdir -p /opt/4js/gdc/2.20.10
+  ignore_errors: yes
+  
+- name: chown 4js
+  command: chown -R fourjs:fourjs 4js
+  args:
+       chdir: /opt
+  ignore_errors: yes
+  
+- name: chmod 4js
+  command: chmod -R 777 /opt/4js
+  ignore_errors: yes
+  
+- name: copy fgl
+  unarchive: src=files/4js/fgl/2.41.04.tar.gz
+             dest=/opt/4js/fgl
+             
+- name: copy gas
+  unarchive: src=files/4js/gas/2.41.25.tar.gz
+            dest=/opt/4js/gas
+
+- name: copy gdc
+  unarchive: src=files/4js/gdc/2.20.10.tar.gz
+             dest=/opt/4js/gdc
+
+# Century Software installation              
+- name: copy bashrc 
+  copy: src=.bashrc dest=/home/acct 
+   
+- name: Create Project
+  unarchive: src=files/Projects.tar
+             dest=/etc
+  
+- name: Projects chown to acct
+  command: chown -R acct:acct Projects
+  args:
+       chdir: /etc
+  ignore_errors: yes
+   
+- name: Creates directory
+  file: path=/appl/acct state=directory owner=acct group=acct mode=0775
+  
+- name: link directory
+  shell: ln -s /appl/ /u2
+  ignore_errors: yes  
+    
+- name: transfer a82
+  unarchive: src=files/a82.tar.gz
+             dest=/u2/acct
+             
+             
+# install informix client
+- name: create infomix/csdk directory
+  command: mkdir -p /opt/installer
+
+- name: Uncompress Informix installer
+  unarchive: src=files/clientsdk.3.70.FC7DE.LINUX.tar
+             dest=/opt/installer 
+      
+- name: Run Installer
+  command: ./installclientsdk -i silent -DLICENSE_ACCEPTED=TRUE -f /opt/IBM/infomix/csdk
+  args:
+       chdir: /opt/installer
+  ignore_errors: yes
+  
+  
+- name: copy sqlhost
+  command: cp sqlhosts.std sqlhosts
+  args:
+       chdir: /opt/IBM/informix/etc/
+  ignore_errors: yes
+  
+- name: Add saga services to /etc/sqlhost
+  lineinfile: dest=/opt/IBM/informix/etc/sqlhosts line='ol_csmsaga       onipcshm       192.168.2.79    service_csmsaga' state=present
+  
+- name: Add saga services to /etc/sqlhost
+  lineinfile: dest=/opt/IBM/informix/etc/sqlhosts line='ol_csmsaga82tcp       onsoctcp       192.168.2.79    service_csmsaga82tcp' state=present
+  
+- name: add bash_profile /home/informix
+  lineinfile: dest=/home/informix/.bash_profile line='export INFORMIXDIR=/opt/IBM/informix' state=present
+  
+- name: add bash_profile /home/informix
+  lineinfile: dest=/home/informix/.bash_profile line='export INFORMIXDIR' state=present
+  
+- name: add bash_profile /home/informix
+  lineinfile: dest=/home/informix/.bash_profile line='export PATH=$INFORMIXDIR/bin:$PATH' state=present
+  
+- name: add bash_profile /home/informix
+  lineinfile: dest=/home/informix/.bash_profile line='export PATH' state=present
+  
+- name: add bash_profile /home/informix
+  lineinfile: dest=/home/informix/.bash_profile line='export DBDATE=DMY4/' state=present
+  
+- name: add bash_profile /home/informix
+  lineinfile: dest=/home/informix/.bash_profile line='export DBDATE' state=present
+  
+- name: add bash_profile /home/informix
+  lineinfile: dest=/home/informix/.bash_profile line='cd $INFORMIXDIR' state=present
+  
+- name: add bash_profile /home/informix
+  lineinfile: dest=/home/informix/.bash_profile line='export INFORMIXSERVER=ol_csmsaga82tcp' state=present
+
+- name: add bash_profile /home/informix
+  lineinfile: dest=/home/informix/.bash_profile line='export INFORMIXSERVER' state=present
+  
+- name: add service name & port
+  lineinfile: dest=/etc/services line='service_csmsaga82tcp   29200/tcp' state=present
+  
+- name: Add host
+  lineinfile: dest=/etc/hosts line='192.168.2.79  mpobtesting' state=present
+  
+- name: Add host
+  lineinfile: dest=/etc/hosts line='192.168.2.100  Ansible-testing' state=present
+  
+- name: configure cs_setenv.ifx
+  copy: src=cs_setenv.ifx dest=/u2/acct/a82/local/bin
+  
+#web configure 
+
+- name: install fastcgi
+  unarchive: src=files/mod_fastcgi-2.4.6.tar.gz
+             dest=/etc
+
+- name: configure makefile
+  command: Makefile.AP2 Makefile
+  args:
+       chdir: /etc/mod_fastcgi-2.4.6
+  ignore_errors: yes
+  
+- name: install fastcgi
+  command: make top_dir=/urs/lib64/httpd
+  args: 
+       chdir: /etc/mod_fastcgi-2.4.6
+  ignore_errors: yes
+  
+- name: install fastcgi
+  command: make install top_dir=/urs/lib64/httpd
+  args: 
+       chdir: /etc/mod_fastcgi-2.4.6
+  ignore_errors: yes

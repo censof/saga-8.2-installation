@@ -1,0 +1,119 @@
+#### Specific Exports ####
+Export="TBCONFIG ONCONFIG INFORMIXSERVER DBSPACETEMP
+	ACCT FGI FGO FGX FRM FGL SH QC CS_OS
+	DB DBDATE DBTIME DBEDIT DBCENTURY DBPATH DBTEMP INFORMIXDIR SQLEXEC
+	FGLDIR FGLPROFILE CC FGLCC FGLDBS FGLDBPATH FGLSOURCEPATH FGLASDIR
+	ORACLE_BASE ORACLE_HOME ORACLE_SID ORACLE_TERM ORACLE_SERVER
+	PGDIR PGSQLHOST JASPERINI UTDEBUG CSFINI
+	FGLLDPATH FGLLIBSQL FGLGUI FGLRUN LIBPATH UTLICMETHOD UTPRODUCT
+	GDC GCC_EXEC_PREFIX UTDIALOGTYPE UTLOOKUPDEBUG UTHEADFOOT
+	UTRESDIR UTRESPATH UTBROWSEPOPUP UTNOATTRIBUTES UTKPIURL UTINDSTYLE
+	PYTHONPATH
+	FGLGO UTGUIVERSION LD_LIBRARY_PATH GSPEDIR UTWEBDIR UTWEBURL FGLPPDEF"
+
+export $Export
+export FGLSERVER	# Dont' clear - allow to persist over projects
+
+ACCT=/u2/acct/a82
+JASPERINI=/u2/acct/a82/local/bin/jasper.ini
+export ACCT
+export HOME=$ACCT
+export CSFINI=/u2/acct/a82/local/csf.ini
+export UTSUPERUSER=acct
+FGLPPDEF="-D FGL220"
+
+### PostgreSQL Env ###
+#PGDIR=/usr/local/pgsql
+#PGSQLHOST=castor.css.net
+
+#INFORMIXDIR=/opt/informix/csdk/3.50.UC4
+INFORMIXDIR=/opt/IBM/informix
+INFORMIXSERVER=ol_csmsaga82tcp
+DBDATE=DMY4/
+ONCONFIG=onconfig.csmsaga
+#INFORMIXSERVER=unikorn_big
+
+FGLDIR=/opt/4js/fgl/2.41.04
+FGLASDIR=/opt/4js/gas/2.41.25
+#FGLDIR=/opt/4js/fgl/2.21.01-64bit
+#FGLASDIR=/opt/4js/gas/2.21.05
+FGL=4js
+GDC=/opt/4js/gdc/2.20.10
+p_resdir=resources
+p_fglprofile=fglprofile.ifx
+export CENTURYDB=century80
+#LD_LIBRARY_PATH=/opt/pg/8.3.7/lib:$INFORMIXDIR/lib:$INFORMIXDIR/lib/esql:$LD_LIBRARY_PATH
+LD_LIBRARY_PATH=$INFORMIXDIR/lib:$INFORMIXDIR/lib/esql:$LD_LIBRARY_PATH
+LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$FGLDIR/bin
+LIBPATH=$LD_LIBRARY_PATH
+PYTHONPATH=$ACCT/lib/py/json:$ACCT/lib/py:$PYTHONPATH
+### Dev Env ###
+FGI=42r
+FGO=42m
+FGX=42x
+FRM=42f
+
+
+### 4Js Common ###
+FGLGO=fglrun
+FGLGUI=1
+FGLRUN=$FGLGO
+
+### Century ###
+#p_hostIP=`hostname -i | sed 's/ //'`
+UTKPIURL=http://$p_hostIP/d69/kpi
+##UTPRODUCT=${UTPRODUCT:-RF82}
+UTPRODUCT=RF82
+UTRESDIR=${UTRESDIR:-$ACCT/$p_resdir}
+UTRESPATH=.:$ACCT/local/resources:$UTRESDIR
+
+UTWEBDIR=/u2/acct/a82/wwwreports
+SCRIPT_URI=${FGL_WEBSERVER_SCRIPT_URI:-http}
+if [[ $SCRIPT_URI =~ "http*" ]]
+then
+	HTTP_PROTOCOL="http"
+else
+	HTTP_PROTOCOL="http"
+fi
+UTWEBURL="$HTTP_PROTOCOL://192.168.2.100/reports"
+
+### %%% Need to get rid of these ... ###
+UTLOOKUPDEBUG=NO
+UTHEADFOOT=NO
+UTBROWSEPOPUP=NO
+UTINDSTYLE=CheckBox
+UTGUIVERSION=3.00
+UTDIALOGTYPE=GEN
+#UTMENUSTYLE=Tree
+
+### 4Js: new HOME is set in above ###
+FGLPROFILE=$ACCT/local/etc/$p_fglprofile
+FGLDBPATH=$ACCT/src/schema
+FGLSOURCEPATH=.:$ACCT/src/lib:$FGLDIR/src
+DBPATH=$DBPATH:$ACCT/form/$FGL:$ACCT/form/$FGL/GUI:$UTRESDIR
+
+### Generate object path from Modules ###
+Modules="ap ar bc bi bp ca cb ct db dv fa fc gl iv jc lc ll mj mp my oe pc pm pu sa sc st ul ut ws"
+p_ObjList=obj
+FGLLDPATH=.
+for p_Dir in $p_ObjList
+do
+	for p_Mod in lib $Modules
+	do
+		case $PROJECT in
+			*)
+				FGLLDPATH=$FGLLDPATH:../$p_Mod
+				DBPATH=$DBPATH:../$p_Mod
+		esac
+		FGLLDPATH=$FGLLDPATH:$ACCT/$p_Dir/$FGL/$p_Mod
+	done
+done
+
+PYTHONPATH=$ACCT/lib/py/json:$ACCT/lib/py:$PYTHONPATH
+
+CDPATH=.:$CDpath:$_CDPATH
+PATH=.:$ACCT/local/bin:$ACCT/bin/ix:$ACCT/lbin:$ACCT/bin/$CS_OS:$ACCT/bin:$ACCT/bin/$FGL:\
+$ACCT/Tools:$AGF/bin:$AGF/bin/ix:$FGLDIR/bin:$FGLASDIR/bin:$GDC/bin::/usr/local/bin:/bin:/usr/bin:\
+/$INFORMIXDIR/bin:$AGF/bin:$_PATH
+
+

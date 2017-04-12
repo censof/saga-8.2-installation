@@ -1,0 +1,12 @@
+# sudo: required
+
+python: 2.7
+
+before_install:
+  - sudo apt-get update -qq
+
+install:
+  - sudo pip install ansible
+
+script:
+  - ansible-playbook -i tests/inventory main.yml --syntax-check --connection=local 
